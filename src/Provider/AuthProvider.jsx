@@ -33,16 +33,7 @@ const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
-  // this is to manage user
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => {
-      return unsubscribe();
-    };
-  });
+ 
 
   const authInfo = {
     user,
