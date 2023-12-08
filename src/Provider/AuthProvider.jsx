@@ -5,8 +5,10 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 import app from "../firebase/firebase.config";
+import axios from "axios";
 
 export const AuthContext = createContext(null);
 const auth = getAuth(app); //
@@ -14,15 +16,15 @@ const auth = getAuth(app); //
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // now no user
-  const [loading, setLoading] = useState(true); // loading alws true
+  const [loading, setLoading] = useState(false); // loading alws false
 
-  // this is for login a user
+  // signUp
   const createUser = (email, password) => {
     setLoading(true);
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  // sign Up
+  // this is for login a user
   const signIn = (email, password) => {
     setLoading(true);
     return signInWithEmailAndPassword(auth, email, password);
@@ -32,8 +34,36 @@ const AuthProvider = ({ children }) => {
     setLoading(true);
     return signOut(auth);
   };
+  // new
+  const UpdateUserProfile = (name, photo) => {
+    setLoading(true);
+    return updateProfile(auth.currentUser, {
+      displayName: name,
+      photoURL: photo,
+    });
+  };
 
- 
+  // this is to manage user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      // get and set token put in localStorage not that much secure
+      if (currentUser) {
+        axios
+          .post("http://localhost:5000/jwt", { email: currentUser.email })
+          .then((data) => {
+            console.log(data);
+            localStorage.setItem("access-token", data.data.token);
+          });
+      } else {
+        localStorage.removeItem("access-token");
+      }
+      setLoading(false);
+    });
+    return () => {
+      return unsubscribe();
+    };
+  });
 
   const authInfo = {
     user,
@@ -41,6 +71,7 @@ const AuthProvider = ({ children }) => {
     createUser,
     signIn,
     logOut,
+    UpdateUserProfile,
   };
 
   return (
